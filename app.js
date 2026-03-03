@@ -21,7 +21,7 @@ app.get('/test-db', async (req, res) => {
     res.status(200).json(rows);
   } catch (error) {
     console.error('Error fetching test table:', error);
-    res.status(500).json({ error: 'Failed to fetch test table' });
+    res.status(500).json({ error: 'Failed to fetch test table', details: error.message });
   }
 });
 
