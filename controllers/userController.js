@@ -37,11 +37,6 @@ async function register(req, res, next) {
       return validationError(res, 'email already exists');
     }
 
-    const existingByUsername = await findUserByUsername(username);
-    if (existingByUsername) {
-      return validationError(res, 'username already exists');
-    }
-
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({ email, username, passwordHash });
     const token = signUserToken(user.id);
@@ -128,11 +123,12 @@ async function updateUser(req, res, next) {
     if (!userPayload || typeof userPayload !== 'object') {
       return validationError(res, 'user payload is required');
     }
+    if(userPayload.email !== undefined){
+      return validationError(res, 'email cannot be updated');
+    }
 
     const updates = {};
-    if (userPayload.email !== undefined) {
-      updates.email = String(userPayload.email).trim();
-    }
+    
     if (userPayload.username !== undefined) {
       updates.username = String(userPayload.username).trim();
     }

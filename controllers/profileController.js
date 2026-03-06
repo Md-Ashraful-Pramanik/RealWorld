@@ -71,6 +71,10 @@ async function unfollow(req, res, next) {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
+    if (targetUser.id === req.auth.userId) {
+      return res.status(422).json({ errors: { body: ['cannot unfollow yourself'] } });
+    }
+
     await unfollowUser(req.auth.userId, targetUser.id);
 
     await recordAudit({
