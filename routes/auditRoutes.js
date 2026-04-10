@@ -4,6 +4,6 @@ const { requireAuth } = require('../utils/auth');
 
 const router = express.Router();
 
-router.get('/audits/:username', requireAuth, getAudits);
+router.get('/audits', requireAuth, getAudits);
 
 module.exports = router;

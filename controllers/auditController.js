@@ -10,25 +10,12 @@ async function getAudits(req, res, next) {
       return res.status(401).json({ error: 'Invalid user' });
     }
 
-    if (req.params.username !== authenticatedUser.username) {
-      await logAudit(req, {
-        userId: authenticatedUser.id,
-        action: 'AUDITS_VIEW_DENIED',
-        statusCode: 403,
-        details: {
-          requestedUsername: req.params.username,
-        },
-      });
-
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
     await logAudit(req, {
       userId: authenticatedUser.id,
       action: 'AUDITS_VIEWED',
       statusCode: 200,
       details: {
-        requestedUsername: req.params.username,
+        username: authenticatedUser.username,
       },
     });
 
