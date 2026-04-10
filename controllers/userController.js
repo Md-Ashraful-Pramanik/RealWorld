@@ -6,6 +6,7 @@ const {
   findUserByUsername,
   updateUserById,
 } = require('../models/userModel');
+const { logAudit } = require('../services/auditService');
 const { signUserToken } = require('../utils/auth');
 const { toUserResponse } = require('../utils/formatters');
 
@@ -32,6 +33,15 @@ async function register(req, res, next) {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({ email, username, passwordHash });
     const token = signUserToken(user.id);
+
+    await logAudit(req, {
+      userId: user.id,
+      action: 'USER_REGISTERED',
+      statusCode: 201,
+      details: {
+        username: user.username,
+      },
+    });
 
     return res.status(201).json(toUserResponse(user, token));
   } catch (error) {
@@ -61,6 +71,15 @@ async function login(req, res, next) {
 
     const token = signUserToken(user.id);
 
+    await logAudit(req, {
+      userId: user.id,
+      action: 'USER_LOGGED_IN',
+      statusCode: 200,
+      details: {
+        username: user.username,
+      },
+    });
+
     return res.json(toUserResponse(user, token));
   } catch (error) {
     return next(error);
@@ -76,6 +95,15 @@ async function getCurrentUser(req, res, next) {
 
     const token = signUserToken(user.id);
 
+    await logAudit(req, {
+      userId: user.id,
+      action: 'CURRENT_USER_FETCHED',
+      statusCode: 200,
+      details: {
+        username: user.username,
+      },
+    });
+
     return res.json(toUserResponse(user, token));
   } catch (error) {
     return next(error);
@@ -86,14 +114,33 @@ async function updateUser(req, res, next) {
   try {
     const userPayload = req.body?.user;
     if (!userPayload || typeof userPayload !== 'object') {
+      await logAudit(req, {
+        userId: req.auth.userId,
+        action: 'USER_UPDATE_REJECTED',
+        statusCode: 422,
+        details: {
+          reason: 'user payload is required',
+        },
+      });
+
       return validationError(res, 'user payload is required');
     }
-    if(userPayload.email !== undefined){
+
+    if (userPayload.email !== undefined) {
+      await logAudit(req, {
+        userId: req.auth.userId,
+        action: 'USER_UPDATE_REJECTED',
+        statusCode: 422,
+        details: {
+          reason: 'email cannot be updated',
+        },
+      });
+
       return validationError(res, 'email cannot be updated');
     }
 
     const updates = {};
-    
+
     if (userPayload.username !== undefined) {
       updates.username = String(userPayload.username).trim();
     }
@@ -110,6 +157,15 @@ async function updateUser(req, res, next) {
     if (updates.email) {
       const existing = await findUserByEmail(updates.email);
       if (existing && existing.id !== req.auth.userId) {
+        await logAudit(req, {
+          userId: req.auth.userId,
+          action: 'USER_UPDATE_REJECTED',
+          statusCode: 422,
+          details: {
+            reason: 'email already exists',
+          },
+        });
+
         return validationError(res, 'email already exists');
       }
     }
@@ -117,16 +173,44 @@ async function updateUser(req, res, next) {
     if (updates.username) {
       const existing = await findUserByUsername(updates.username);
       if (existing && existing.id !== req.auth.userId) {
+        await logAudit(req, {
+          userId: req.auth.userId,
+          action: 'USER_UPDATE_REJECTED',
+          statusCode: 422,
+          details: {
+            reason: 'username already exists',
+            attemptedUsername: updates.username,
+          },
+        });
+
         return validationError(res, 'username already exists');
       }
     }
 
     const updatedUser = await updateUserById(req.auth.userId, updates);
     if (!updatedUser) {
+      await logAudit(req, {
+        userId: req.auth.userId,
+        action: 'USER_UPDATE_REJECTED',
+        statusCode: 404,
+        details: {
+          reason: 'user not found',
+        },
+      });
+
       return res.status(404).json({ error: 'User not found' });
     }
 
     const token = signUserToken(updatedUser.id);
+
+    await logAudit(req, {
+      userId: updatedUser.id,
+      action: 'USER_UPDATED',
+      statusCode: 200,
+      details: {
+        updatedFields: Object.keys(userPayload),
+      },
+    });
 
     return res.json(toUserResponse(updatedUser, token));
   } catch (error) {
