@@ -8,14 +8,6 @@ const {
 } = require('../models/userModel');
 const { signUserToken } = require('../utils/auth');
 const { toUserResponse } = require('../utils/formatters');
-const { recordAudit } = require('../utils/audit');
-
-function getRequestMeta(req) {
-  return {
-    requestIp: req.ip,
-    userAgent: req.headers['user-agent'] || null,
-  };
-}
 
 function validationError(res, message) {
   return res.status(422).json({ errors: { body: [message] } });
@@ -40,15 +32,6 @@ async function register(req, res, next) {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({ email, username, passwordHash });
     const token = signUserToken(user.id);
-
-    await recordAudit({
-      actorUserId: user.id,
-      action: 'USER_REGISTERED',
-      entityType: 'user',
-      entityId: String(user.id),
-      metadata: { email: user.email, username: user.username },
-      ...getRequestMeta(req),
-    });
 
     return res.status(201).json(toUserResponse(user, token));
   } catch (error) {
@@ -78,15 +61,6 @@ async function login(req, res, next) {
 
     const token = signUserToken(user.id);
 
-    await recordAudit({
-      actorUserId: user.id,
-      action: 'USER_LOGGED_IN',
-      entityType: 'user',
-      entityId: String(user.id),
-      metadata: { email: user.email },
-      ...getRequestMeta(req),
-    });
-
     return res.json(toUserResponse(user, token));
   } catch (error) {
     return next(error);
@@ -101,15 +75,6 @@ async function getCurrentUser(req, res, next) {
     }
 
     const token = signUserToken(user.id);
-
-    await recordAudit({
-      actorUserId: user.id,
-      action: 'USER_FETCHED_CURRENT',
-      entityType: 'user',
-      entityId: String(user.id),
-      metadata: {},
-      ...getRequestMeta(req),
-    });
 
     return res.json(toUserResponse(user, token));
   } catch (error) {
@@ -162,19 +127,6 @@ async function updateUser(req, res, next) {
     }
 
     const token = signUserToken(updatedUser.id);
-
-    await recordAudit({
-      actorUserId: updatedUser.id,
-      action: 'USER_UPDATED',
-      entityType: 'user',
-      entityId: String(updatedUser.id),
-      metadata: {
-        updatedFields: Object.keys(userPayload).filter((field) =>
-          ['email', 'username', 'password', 'image', 'bio'].includes(field)
-        ),
-      },
-      ...getRequestMeta(req),
-    });
 
     return res.json(toUserResponse(updatedUser, token));
   } catch (error) {
