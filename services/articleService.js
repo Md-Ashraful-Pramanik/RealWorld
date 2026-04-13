@@ -1,4 +1,5 @@
 const slugify = require('slugify');
+const xss = require('xss');
 
 const articleModel = require('../models/articleModel');
 const userModel = require('../models/userModel');
@@ -54,15 +55,20 @@ const createArticle = async (articleData, currentUserId) => {
     return { errors, statusCode: 422 };
   }
 
-  const slug = generateSlug(articleData.title);
+  const sanitizedTitle = xss(articleData.title);
+  const sanitizedDescription = xss(articleData.description);
+  const sanitizedBody = xss(articleData.body);
+  const sanitizedTagList = (articleData.tagList || []).map((tag) => xss(tag));
+
+  const slug = generateSlug(sanitizedTitle);
 
   const article = await articleModel.createArticle({
     slug,
-    title: articleData.title,
-    description: articleData.description,
-    body: articleData.body,
+    title: sanitizedTitle,
+    description: sanitizedDescription,
+    body: sanitizedBody,
     authorId: currentUserId,
-    tagList: articleData.tagList || [],
+    tagList: sanitizedTagList,
   });
 
   const author = await resolveAuthorProfile(currentUserId, currentUserId);

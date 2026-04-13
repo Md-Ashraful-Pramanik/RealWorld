@@ -83,7 +83,7 @@ const deleteArticle = async (req, res) => {
       return sendError(res, result.statusCode, 'request failed', result.errors);
     }
 
-    return res.status(result.statusCode).send();
+    return res.status(result.statusCode).json({});
   } catch (error) {
     return sendServerError(res, error);
   }

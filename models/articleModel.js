@@ -41,6 +41,7 @@ const ensureArticleTagsTable = async () => {
         CREATE TABLE IF NOT EXISTS article_tags (
           article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
           tag VARCHAR(255) NOT NULL,
+          position INTEGER NOT NULL DEFAULT 0,
           PRIMARY KEY (article_id, tag)
         )
       `)
@@ -104,10 +105,13 @@ const createArticle = async ({ slug, title, description, body, authorId, tagList
     const article = articleRows[0];
 
     if (tagList && tagList.length > 0) {
-      const tagValues = tagList.map((_, i) => `($1, $${i + 2})`).join(', ');
-      const tagParams = [article.id, ...tagList];
+      const tagValues = tagList.map((_, i) => `($1, $${i * 2 + 2}, $${i * 2 + 3})`).join(', ');
+      const tagParams = [article.id];
+      tagList.forEach((tag, i) => {
+        tagParams.push(tag, i);
+      });
       await client.query(
-        `INSERT INTO article_tags (article_id, tag) VALUES ${tagValues} ON CONFLICT DO NOTHING`,
+        `INSERT INTO article_tags (article_id, tag, position) VALUES ${tagValues} ON CONFLICT DO NOTHING`,
         tagParams,
       );
     }
@@ -130,7 +134,7 @@ const findArticleBySlug = async (slug) => {
     SELECT a.id, a.slug, a.title, a.description, a.body,
            a.author_id, a.created_at, a.updated_at,
            COALESCE(
-             (SELECT array_agg(t.tag ORDER BY t.tag) FROM article_tags t WHERE t.article_id = a.id),
+             (SELECT array_agg(t.tag ORDER BY t.position) FROM article_tags t WHERE t.article_id = a.id),
              ARRAY[]::VARCHAR[]
            ) AS tag_list,
            (SELECT COUNT(*)::INTEGER FROM favorites f WHERE f.article_id = a.id) AS favorites_count
@@ -187,7 +191,7 @@ const updateArticle = async (id, updates) => {
 
   const article = rows[0];
   const tagQuery = `
-    SELECT COALESCE(array_agg(tag ORDER BY tag), ARRAY[]::VARCHAR[]) AS tag_list
+    SELECT COALESCE(array_agg(tag ORDER BY position), ARRAY[]::VARCHAR[]) AS tag_list
     FROM article_tags WHERE article_id = $1
   `;
   const { rows: tagRows } = await pool.query(tagQuery, [article.id]);
@@ -221,7 +225,7 @@ const findArticleById = async (id) => {
     SELECT a.id, a.slug, a.title, a.description, a.body,
            a.author_id, a.created_at, a.updated_at,
            COALESCE(
-             (SELECT array_agg(t.tag ORDER BY t.tag) FROM article_tags t WHERE t.article_id = a.id),
+             (SELECT array_agg(t.tag ORDER BY t.position) FROM article_tags t WHERE t.article_id = a.id),
              ARRAY[]::VARCHAR[]
            ) AS tag_list,
            (SELECT COUNT(*)::INTEGER FROM favorites f WHERE f.article_id = a.id) AS favorites_count
@@ -277,7 +281,7 @@ const listArticles = async ({ tag, author, favorited, limit = 20, offset = 0 }) 
     SELECT a.id, a.slug, a.title, a.description, a.body,
            a.author_id, a.created_at, a.updated_at,
            COALESCE(
-             (SELECT array_agg(t.tag ORDER BY t.tag) FROM article_tags t WHERE t.article_id = a.id),
+             (SELECT array_agg(t.tag ORDER BY t.position) FROM article_tags t WHERE t.article_id = a.id),
              ARRAY[]::VARCHAR[]
            ) AS tag_list,
            (SELECT COUNT(*)::INTEGER FROM favorites f WHERE f.article_id = a.id) AS favorites_count
@@ -308,7 +312,7 @@ const listFeedArticles = async ({ userId, limit = 20, offset = 0 }) => {
     SELECT a.id, a.slug, a.title, a.description, a.body,
            a.author_id, a.created_at, a.updated_at,
            COALESCE(
-             (SELECT array_agg(t.tag ORDER BY t.tag) FROM article_tags t WHERE t.article_id = a.id),
+             (SELECT array_agg(t.tag ORDER BY t.position) FROM article_tags t WHERE t.article_id = a.id),
              ARRAY[]::VARCHAR[]
            ) AS tag_list,
            (SELECT COUNT(*)::INTEGER FROM favorites fav WHERE fav.article_id = a.id) AS favorites_count
