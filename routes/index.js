@@ -14,6 +14,14 @@ const {
 	followUser,
 	unfollowUser,
 } = require('../controllers/profileController');
+const {
+	listArticles,
+	feedArticles,
+	getArticle,
+	createArticle,
+	updateArticle,
+	deleteArticle,
+} = require('../controllers/articleController');
 const { getAudits } = require('../controllers/auditController');
 
 const router = express.Router();
@@ -29,6 +37,13 @@ router.put('/api/user', authenticateUser, updateCurrentUser);
 router.get('/api/profiles/:username', authenticateOptional, getProfile);
 router.post('/api/profiles/:username/follow', authenticateUser, followUser);
 router.delete('/api/profiles/:username/follow', authenticateUser, unfollowUser);
+
+router.get('/api/articles/feed', authenticateUser, feedArticles);
+router.get('/api/articles', authenticateOptional, listArticles);
+router.get('/api/articles/:slug', authenticateOptional, getArticle);
+router.post('/api/articles', authenticateUser, createArticle);
+router.put('/api/articles/:slug', authenticateUser, updateArticle);
+router.delete('/api/articles/:slug', authenticateUser, deleteArticle);
 
 router.get('/api/audits', authenticateUser, getAudits);
 

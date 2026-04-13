@@ -52,3 +52,6 @@ Thumbs.db
 
 # Misc
 run-commands.sh
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
