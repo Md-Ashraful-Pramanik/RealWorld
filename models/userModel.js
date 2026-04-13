@@ -68,6 +68,20 @@ const findUserById = async (id) => {
   return rows[0] || null;
 };
 
+const findUserByUsername = async (username) => {
+  await ensureUsersTable();
+
+  const query = `
+    SELECT id, username, email, bio, image
+    FROM users
+    WHERE username = $1
+    LIMIT 1
+  `;
+  const { rows } = await pool.query(query, [username]);
+
+  return rows[0] || null;
+};
+
 const updateUserById = async (id, updates) => {
   await ensureUsersTable();
 
@@ -111,5 +125,6 @@ module.exports = {
   ensureUsersTable,
   findUserByEmail,
   findUserById,
+  findUserByUsername,
   updateUserById,
 };
