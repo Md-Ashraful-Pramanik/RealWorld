@@ -89,6 +89,34 @@ const deleteArticle = async (req, res) => {
   }
 };
 
+const favoriteArticle = async (req, res) => {
+  try {
+    const result = await articleService.favoriteArticle(req.params.slug, req.user.id);
+
+    if (result.errors) {
+      return sendError(res, result.statusCode, 'request failed', result.errors);
+    }
+
+    return res.status(result.statusCode).json({ article: result.article });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const unfavoriteArticle = async (req, res) => {
+  try {
+    const result = await articleService.unfavoriteArticle(req.params.slug, req.user.id);
+
+    if (result.errors) {
+      return sendError(res, result.statusCode, 'request failed', result.errors);
+    }
+
+    return res.status(result.statusCode).json({ article: result.article });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
 module.exports = {
   listArticles,
   feedArticles,
@@ -96,4 +124,6 @@ module.exports = {
   createArticle,
   updateArticle,
   deleteArticle,
+  favoriteArticle,
+  unfavoriteArticle,
 };

@@ -21,7 +21,15 @@ const {
 	createArticle,
 	updateArticle,
 	deleteArticle,
+	favoriteArticle,
+	unfavoriteArticle,
 } = require('../controllers/articleController');
+const {
+	addComment,
+	getComments,
+	deleteComment,
+} = require('../controllers/commentController');
+const { getTags } = require('../controllers/tagController');
 const { getAudits } = require('../controllers/auditController');
 
 const router = express.Router();
@@ -44,6 +52,15 @@ router.get('/api/articles/:slug', authenticateOptional, getArticle);
 router.post('/api/articles', authenticateUser, createArticle);
 router.put('/api/articles/:slug', authenticateUser, updateArticle);
 router.delete('/api/articles/:slug', authenticateUser, deleteArticle);
+
+router.post('/api/articles/:slug/comments', authenticateUser, addComment);
+router.get('/api/articles/:slug/comments', authenticateOptional, getComments);
+router.delete('/api/articles/:slug/comments/:id', authenticateUser, deleteComment);
+
+router.post('/api/articles/:slug/favorite', authenticateUser, favoriteArticle);
+router.delete('/api/articles/:slug/favorite', authenticateUser, unfavoriteArticle);
+
+router.get('/api/tags', getTags);
 
 router.get('/api/audits', authenticateUser, getAudits);
 
