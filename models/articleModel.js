@@ -336,6 +336,27 @@ const isArticleFavoritedByUser = async (articleId, userId) => {
   return rows.length > 0;
 };
 
+const favoriteArticle = async (userId, articleId) => {
+  await ensureFavoritesTable();
+
+  const query = `
+    INSERT INTO favorites (user_id, article_id)
+    VALUES ($1, $2)
+    ON CONFLICT DO NOTHING
+  `;
+  await pool.query(query, [userId, articleId]);
+};
+
+const unfavoriteArticle = async (userId, articleId) => {
+  await ensureFavoritesTable();
+
+  const query = `
+    DELETE FROM favorites
+    WHERE user_id = $1 AND article_id = $2
+  `;
+  await pool.query(query, [userId, articleId]);
+};
+
 const findSlugExists = async (slug, excludeId) => {
   await ensureArticlesTable();
 
@@ -366,5 +387,7 @@ module.exports = {
   listArticles,
   listFeedArticles,
   isArticleFavoritedByUser,
+  favoriteArticle,
+  unfavoriteArticle,
   findSlugExists,
 };

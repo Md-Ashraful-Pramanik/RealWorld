@@ -221,6 +221,42 @@ const feedArticles = async (query, currentUserId) => {
   };
 };
 
+const favoriteArticle = async (slug, currentUserId) => {
+  const article = await articleModel.findArticleBySlug(slug);
+
+  if (!article) {
+    return { errors: { article: ['not found'] }, statusCode: 404 };
+  }
+
+  await articleModel.favoriteArticle(currentUserId, article.id);
+
+  const updatedArticle = await articleModel.findArticleBySlug(slug);
+  const author = await resolveAuthorProfile(updatedArticle.author_id, currentUserId);
+
+  return {
+    article: formatArticle(updatedArticle, author, true),
+    statusCode: 200,
+  };
+};
+
+const unfavoriteArticle = async (slug, currentUserId) => {
+  const article = await articleModel.findArticleBySlug(slug);
+
+  if (!article) {
+    return { errors: { article: ['not found'] }, statusCode: 404 };
+  }
+
+  await articleModel.unfavoriteArticle(currentUserId, article.id);
+
+  const updatedArticle = await articleModel.findArticleBySlug(slug);
+  const author = await resolveAuthorProfile(updatedArticle.author_id, currentUserId);
+
+  return {
+    article: formatArticle(updatedArticle, author, false),
+    statusCode: 200,
+  };
+};
+
 module.exports = {
   createArticle,
   getArticle,
@@ -228,4 +264,6 @@ module.exports = {
   deleteArticle,
   listArticles,
   feedArticles,
+  favoriteArticle,
+  unfavoriteArticle,
 };
