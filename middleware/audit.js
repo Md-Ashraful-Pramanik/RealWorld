@@ -3,9 +3,9 @@ const auditService = require('../services/auditService');
 const auditLogger = (req, res, next) => {
   const originalJson = res.json.bind(res);
 
-  res.json = (body) => {
+  res.json = async (body) => {
     if (req.user && req.user.id) {
-      auditService.logAudit({
+      await auditService.logAudit({
         userId: req.user.id,
         action: req.method,
         path: req.originalUrl,

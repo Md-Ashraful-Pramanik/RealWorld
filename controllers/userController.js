@@ -9,6 +9,9 @@ const loginUser = async (req, res) => {
       return sendError(res, result.statusCode, 'validation failed', result.errors);
     }
 
+    const decoded = userService.verifyToken(result.user.token);
+    req.user = { id: decoded.id };
+
     return res.status(result.statusCode).json({ user: result.user });
   } catch (error) {
     return sendServerError(res, error);
@@ -22,6 +25,9 @@ const registerUser = async (req, res) => {
     if (result.errors) {
       return sendError(res, result.statusCode, 'validation failed', result.errors);
     }
+
+    const decoded = userService.verifyToken(result.user.token);
+    req.user = { id: decoded.id };
 
     return res.status(result.statusCode).json({ user: result.user });
   } catch (error) {
