@@ -60,7 +60,7 @@ router.delete('/api/articles/:slug/comments/:id', authenticateUser, deleteCommen
 router.post('/api/articles/:slug/favorite', authenticateUser, favoriteArticle);
 router.delete('/api/articles/:slug/favorite', authenticateUser, unfavoriteArticle);
 
-router.get('/api/tags', getTags);
+router.get('/api/tags', authenticateOptional, getTags);
 
 router.get('/api/audits', authenticateUser, getAudits);
 
