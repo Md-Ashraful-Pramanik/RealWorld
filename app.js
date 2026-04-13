@@ -6,6 +6,7 @@ dotenv.config();
 
 const routes = require('./routes');
 const { sendNotFound } = require('./utils/response');
+const { auditLogger } = require('./middleware/audit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(auditLogger);
 
 app.use('/', routes);
 
