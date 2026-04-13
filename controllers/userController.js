@@ -45,7 +45,11 @@ const getCurrentUser = async (req, res) => {
 
 const updateCurrentUser = async (req, res) => {
   try {
-    const result = await userService.updateCurrentUser(req.user.id, req.body.user || {});
+    if (!req.body.user || typeof req.body.user !== 'object' || Array.isArray(req.body.user)) {
+      return sendError(res, 422, 'validation failed', { user: ['is required and must be an object'] });
+    }
+
+    const result = await userService.updateCurrentUser(req.user.id, req.body.user);
 
     if (result.errors) {
       return sendError(res, result.statusCode, 'validation failed', result.errors);
