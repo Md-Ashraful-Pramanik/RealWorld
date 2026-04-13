@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { authenticateUser } = require('../middleware/auth');
+const { authenticateUser, authenticateOptional } = require('../middleware/auth');
 const { sayHello } = require('../controllers/helloController');
 const { getTestTableData } = require('../controllers/testDbController');
 const {
@@ -9,6 +9,11 @@ const {
 	getCurrentUser,
 	updateCurrentUser,
 } = require('../controllers/userController');
+const {
+	getProfile,
+	followUser,
+	unfollowUser,
+} = require('../controllers/profileController');
 
 const router = express.Router();
 
@@ -19,5 +24,9 @@ router.post('/api/users/login', loginUser);
 router.post('/api/users', registerUser);
 router.get('/api/user', authenticateUser, getCurrentUser);
 router.put('/api/user', authenticateUser, updateCurrentUser);
+
+router.get('/api/profiles/:username', authenticateOptional, getProfile);
+router.post('/api/profiles/:username/follow', authenticateUser, followUser);
+router.delete('/api/profiles/:username/follow', authenticateUser, unfollowUser);
 
 module.exports = router;

@@ -40,6 +40,22 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
+const authenticateOptional = async (req, res, next) => {
+  try {
+    const token = extractToken(req.headers.authorization);
+
+    if (token) {
+      const decoded = userService.verifyToken(token);
+      req.user = { id: decoded.id };
+    }
+
+    return next();
+  } catch (error) {
+    return next();
+  }
+};
+
 module.exports = {
   authenticateUser,
+  authenticateOptional,
 };
