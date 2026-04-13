@@ -65,6 +65,13 @@ const unfollowUser = async (username, currentUserId) => {
     };
   }
 
+  if (user.id === currentUserId) {
+    return {
+      errors: { profile: ['cannot unfollow yourself'] },
+      statusCode: 422,
+    };
+  }
+
   await followModel.removeFollow(currentUserId, user.id);
 
   return {
