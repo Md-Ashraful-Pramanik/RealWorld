@@ -126,7 +126,20 @@ const getCurrentUser = async (userId) => {
   };
 };
 
+const ALLOWED_UPDATE_FIELDS = ['password', 'image', 'bio'];
+
 const updateCurrentUser = async (userId, payload) => {
+  const disallowedFields = Object.keys(payload).filter(
+    (field) => !ALLOWED_UPDATE_FIELDS.includes(field)
+  );
+
+  if (disallowedFields.length) {
+    return {
+      errors: { [disallowedFields[0]]: ['is not allowed'] },
+      statusCode: 422,
+    };
+  }
+
   const updates = {};
 
   if (Object.prototype.hasOwnProperty.call(payload, 'password')) {
